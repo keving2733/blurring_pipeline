@@ -32,15 +32,15 @@ def extract_and_write_imgs():
     # if len(args.bags) != len(args.topics):
     #     print("Number of rosbags does not match number of topics specified. Please specify topic name for each bag. ")
     #     return
-    bag =rosbag.Bag(args.output_bag, 'w')
+    bag = rosbag.Bag(args.output_bag, 'w')
     idx = 0
+    previous_faces = []
     for i in range(len(args.bags)):
-        print ("Saving every %d images from %s on topic %s into) %s % (args.sample, args.bags[i], args.topics[i], args.output_dir")
+        # print ("Saving every %d images from %s on topic %s into) %s" % (args.sample, args.bags[i], args.topics[i], args.output_dir))
         bag = rosbag.Bag(args.bags[i], "r")
         # count = 0
         for topic_name, msg, t in bag.read_messages(topics=args.topics):
             # if count % args.sample == 0:
-            cv_img = None
             if args.compressed:
                 cv_img = bridge.compressed_imgmsg_to_cv2(msg)
             
@@ -48,10 +48,20 @@ def extract_and_write_imgs():
                 cv_img = bridge.imgmsg_to_cv2(msg, desired_encoding="passthrough")
 
             blurred_image = detect_and_blur(cv_img)
-            
-            blurred_message = bridge.cv2_to_imgmsg(blurred_image, encoding="passthrough")
 
-            bag.write(topic_name,blurred_message,t)
+            if args.compressed:
+                blurred_message = bridge.cv2_to_compressed_imgmsg(blurred_image)
+
+            else:
+                blurred_message = bridge.cv2_to_imgmsg(blurred_image, encoding="passthrough")
+            # print('ros message: ')
+            # print(type(msg))
+            # print('   time: ')
+            # print(type(t))
+            try:
+                bag.write(topic_name,blurred_message,t)
+            except:
+                bag.write(topic_name,msg,t)
             idx += 1
 
             # count += 1
@@ -73,29 +83,9 @@ def visualize(input, faces, fps, thickness=2):
             cv2.circle(input, (coords[12], coords[13]), 2, (0, 255, 255), thickness)
     cv2.putText(input, 'FPS: {:.2f}'.format(fps), (1, 16), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-def detect_and_blur():
+def detect_and_blur(raw_img):
 
-    # Haar Cascade Classifier
-
-    # # Load the cascade
-    # face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-    # # Read the input image
-    # # img = cv2.imread('/home/keving07/Downloads/test.jpg')
-    # # cv2.imshow('img', img)
-    # # cv2.waitKey()
-    # # Convert into grayscale
-    # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    # # Detect faces
-    # faces = face_cascade.detectMultiScale(gray, 1.1, 4)
-    # Draw rectangle around the faces
-    # for (x, y, w, h) in faces:
-    #     cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
-    # # Display the output
-    # cv2.imshow('img', img)
-    # cv2.waitKey()
-
-    # DNN Classifier
-    image1 = '/home/keving07/Downloads/test_multi3.jpg'
+    #path to face detection model
     face_detection_model = '/home/keving07/opencv_zoo/models/face_detection_yunet/face_detection_yunet_2022mar.onnx'
     score_threshold = 0.9
     nms_threshold = 0.3
@@ -110,60 +100,55 @@ def detect_and_blur():
         nms_threshold,
         top_k
     )
-    
+    gray_image = False
     tm = cv2.TickMeter()
     # If input is an image
-    if image1 is not None:
-        img1 = cv2.imread(cv2.samples.findFile(image1))
-        img1Width = int(img1.shape[1]*scale)
-        img1Height = int(img1.shape[0]*scale)
-        img1 = cv2.resize(img1, (img1Width, img1Height))
-        tm.start()
-        
-        detector.setInputSize((img1Width, img1Height))
-        faces = detector.detect(img1)
-        
-        tm.stop()
-        assert faces[1] is not None, 'Cannot find a face in {}'.format(image1)
-        # Draw results on the input image
-        # visualize(img1, faces, tm.getFPS())
-        # Save results if save is true
+    # if image1 is not None:
+    # img = cv2.imread(cv2.samples.findFile(image1))
+    if len(raw_img.shape) == 2:
+        img = cv2.cvtColor(raw_img,cv2.COLOR_GRAY2RGB)
+        gray_image = True
+    else:
+        img = raw_image 
+    imgWidth = int(img.shape[1]*scale)
+    imgHeight = int(img.shape[0]*scale)
+    img = cv2.resize(img, (imgWidth, imgHeight))
+    tm.start()
+       
+    detector.setInputSize((imgWidth, imgHeight))
+    faces = detector.detect(img)
+    
+    tm.stop()
+    # assert faces[1] is not None, 'Cannot find a face in {}'.format(img)
+    # Draw results on the input image, drawing a rectangle around the
+    # Visualize results in a new window 
+    # visualize(img, faces, tm.getFPS())
+    # Save results if save is true
 
-        print('Results saved to result.jpg\n')
-        
-        # Visualize results in a new window
-
-    # Blurring for Haar Cascade Classifier
-    # for (x, y, w, h) in faces:
-    #     roi = img[y:y + h, x:x + w]
-
-    #     # apply gaussian blur to face rectangle
-    #     roi = cv2.GaussianBlur(roi, (51, 51), 50)
-
-    #     # add blurred face on original image to get final image
-    #     img[y:y + roi.shape[0], x:x + roi.shape[1]] = roi
 
     # Display the output
-    for idx, face in enumerate(faces[1]):
-        coords = face[:-1].astype(np.int32)
-        x0,y0 = (coords[0], coords[1])
-        x1,y1 = (coords[0]+coords[2], coords[1]+coords[3])
+    if faces[1] is not None:
+        for idx, face in enumerate(faces[1]):
+            coords = face[:-1].astype(np.int32)
+            x_start,y_start = (coords[0], coords[1])
+            x_end,y_end = (coords[0]+coords[2], coords[1]+coords[3])
 
-        roi = img1[y0:y1, x0:x1]
-        # apply gaussian blur to face rectangle
-        roi = cv2.GaussianBlur(roi, (51, 51), 50)
+            roi = img[y_start:y_end, x_start:x_end]
+            # apply gaussian blur to face rectangle
+            roi = cv2.GaussianBlur(roi, (51, 51), 50)
 
-        # add blurred face on original image to get final image
-        img1[y0:y0 + roi.shape[0], x0:x0 + roi.shape[1]] = roi
-    cv2.imshow('Blur Face', img1)
-    cv2.imwrite('blurred_result.jpg', img1)
-    cv2.waitKey(0)
-    return img1 
+            # add blurred face on original image to get final image
+            img[y_start:y_start + roi.shape[0], x_start:x_start + roi.shape[1]] = roi
+    if gray_image:
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    if img is None:
+        print('error with making image')
+    return img 
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    detect_and_blur()
-    # extract_and_write_imgs()
+    # detect_and_blur('/home/keving07/Downloads/testbw.jpg')
+    extract_and_write_imgs()
 
-#python3 /home/keving07/Downloads/convert_1.py --bags /home/keving07/Downloads/acl_jackal2_test3.bag --output_dir /home/keving07/Downloads/test_folder --topics /acl_jackal2/forward/infra2/image_rect_raw/compressed /acl_jackal2/forward/infra1/image_rect_raw/compressed /acl_jackal2/forward/infra2/image_rect_raw/compressed --sample 1
+# python3 /home/keving07/Downloads/blurring_pipeline/rosbag_multiface_blurr.py --bags /home/keving07/Downloads/acl_jackal2_test3.bag -ob /home/keving07/Downloads/test_folder --topics /acl_jackal2/forward/infra2/image_rect_raw/compressed /acl_jackal2/forward/infra1/image_rect_raw/compressed -c true
