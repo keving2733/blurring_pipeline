@@ -15,7 +15,7 @@ from sensor_msgs.msg import Image, CompressedImage
 from cv_bridge import CvBridge
 
 
-def blur_bag(source, topics, blur_topics, output, onnx_file):
+def blur_bag(source, topics, blur_topics, output, fd_onnx_file, lp_onnx_file):
     """Extract images from bag and write to new bag
     """
     bridge = CvBridge()
@@ -35,7 +35,7 @@ def blur_bag(source, topics, blur_topics, output, onnx_file):
                 msg, desired_encoding="passthrough")
 
         # Blur image
-        blurred_image = detect_and_blur(cv_img, onnx_file)
+        blurred_image = detect_and_blur(cv_img, fd_onnx_file, lp_onnx_file)
 
         if compressed:
             blurred_message = bridge.cv2_to_compressed_imgmsg(
@@ -62,8 +62,8 @@ def main():
         blur_topics = ["/" + robot_name + "/" +
                        t for t in configs["blur_topics"]]
         # print(topics, blur_topics)
-        blur_bag(configs["bag_path"], topics,
-                 blur_topics, configs["output_path"], configs["onnx_file"])
+        blur_bag(configs["bag_path"], topics, blur_topics, configs["output_path"],
+                 configs["face_onnx_file"], configs["license_plate_onnx_file"])
 
 
 # Press the green button in the gutter to run the script.
