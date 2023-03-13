@@ -10,7 +10,7 @@ import numpy as np
 import yaml
 import click
 
-from face_detect_utils import detect_and_blur
+from face_detect_utils import DetectBlurPipeline
 from sensor_msgs.msg import Image, CompressedImage
 from cv_bridge import CvBridge
 
@@ -18,6 +18,7 @@ from cv_bridge import CvBridge
 def blur_bag(source, topics, blur_topics, output, fd_onnx_file, lp_onnx_file):
     """Extract images from bag and write to new bag
     """
+    processor = DetectBlurPipeline(fd_onnx_file, lp_onnx_file)
     bridge = CvBridge()
     outbag = rosbag.Bag(output, 'w')
     previous_faces = []
@@ -35,7 +36,7 @@ def blur_bag(source, topics, blur_topics, output, fd_onnx_file, lp_onnx_file):
                 msg, desired_encoding="passthrough")
 
         # Blur image
-        blurred_image = detect_and_blur(cv_img, fd_onnx_file, lp_onnx_file)
+        blurred_image = processor.detect_and_blur(cv_img)
 
         if compressed:
             blurred_message = bridge.cv2_to_compressed_imgmsg(
@@ -66,6 +67,5 @@ def main():
                  configs["face_onnx_file"], configs["license_plate_onnx_file"])
 
 
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     main()
