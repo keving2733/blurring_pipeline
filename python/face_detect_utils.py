@@ -27,7 +27,9 @@ class DetectBlurPipeline:
             (320, 320),
             score_threshold,
             nms_threshold,
-            top_k
+            top_k,
+            cv2.dnn.DNN_BACKEND_CUDA,
+            cv2.dnn.DNN_TARGET_CUDA
         )
 
         self.lp_detector = LPD_YuNet(modelPath=licence_plate_model,
@@ -35,8 +37,8 @@ class DetectBlurPipeline:
                                      nmsThreshold=nms_threshold,
                                      topK=top_k,
                                      keepTopK=800,
-                                     backendId=cv2.dnn.DNN_BACKEND_OPENCV,
-                                     targetId=cv2.dnn.DNN_TARGET_CPU)
+                                     backendId=cv2.dnn.DNN_BACKEND_CUDA,
+                                     targetId=cv2.dnn.DNN_TARGET_CUDA)
 
     def detect_and_blur(self, raw_img):
         gray_image = False

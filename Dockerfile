@@ -1,11 +1,12 @@
 # CUDA 11.4
-FROM nvidia/cuda:11.4.0-cudnn8-runtime-ubuntu18.04
+FROM nvidia/cuda:11.4.0-cudnn8-devel-ubuntu20.04
 
 MAINTAINER Yun Chang "yunchang@mit.edu"
 
 ARG DEBIAN_FRONTEND=noninteractive
+MAINTAINER Yun Chang "yunchang@mit.edu"
 
-ARG OPENCV_VERSION=4.5.5
+ARG OPENCV_VERSION=4.7.0
 
 RUN apt-get update && apt-get upgrade -y &&\
     # Install build tools, build dependencies and python
@@ -61,6 +62,11 @@ RUN cd /opt/ &&\
     cmake \
         -DOPENCV_EXTRA_MODULES_PATH=/opt/opencv_contrib-${OPENCV_VERSION}/modules \
         -DWITH_CUDA=ON \
+        -DWITH_CUDNN=ON \
+        -DWITH_CUBLAS=ON \
+        -DCUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda-11.4 \
+        -DPYTHON_EXECUTABLE=~/usr/bin/python3 \
+        -DOPENCV_DNN_CUDA=ON \
         -DCUDA_ARCH_BIN=7.5,8.0,8.6 \
         -DCMAKE_BUILD_TYPE=RELEASE \
         # Install path will be /usr/local/lib (lib is implicit)
@@ -83,9 +89,9 @@ RUN sed -i -e 's/us.archive.ubuntu.com/archive.ubuntu.com/g' /etc/apt/sources.li
     sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list' &&\
     curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add - &&\
     apt-get update &&\
-    apt-get install -y ros-melodic-ros-base &&\
-    apt-get install -y ros-melodic-cv-bridge &&\
-    echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc &&\
+    apt-get install -y ros-noetic-ros-base &&\
+    apt-get install -y ros-noetic-cv-bridge &&\
+    echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc &&\
     source ~/.bashrc
 
 # Set working directory to /root
