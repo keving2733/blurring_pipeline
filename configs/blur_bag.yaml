@@ -1,7 +1,8 @@
-robot_name: "acl_jackal2"
-bag_path: "/data/MIT_10_14_2022/mit_cyan_new.bag"
+robot_name: ["acl_jackal2", "acl_jackal2"]
+bag_path: ["/data/MIT_10_14_2022/mit_green_cut.bag", "/data/MIT_10_14_2022/mit_red.bag"]
+out_robot_name: ["sparkal1", "acl_jackal"]
 topics: ["forward/color/image_raw/compressed", "forward/color/camera_info", "forward/depth/image_rect_raw", "forward/depth/camera_info", "forward/infra1/image_rect_raw/compressed", "forward/infra1/camera_info", "forward/infra2/image_rect_raw/compressed", "forward/infra2/camera_info", "forward/imu", "jackal_velocity_controller/odom", "lidar_points"]
 blur_topics: ["forward/color/image_raw/compressed", "forward/infra1/image_rect_raw/compressed", "forward/infra2/image_rect_raw/compressed"]
-output_path: "/data/blur_test/acl_jackal.bag"
+output_path: ["/data/blur_test/1014_sparkal1.bag", "/data/blur_test/1014_acl_jackal.bag"]
 face_onnx_file: "/root/blurring_pipeline/external/opencv_zoo/models/face_detection_yunet/face_detection_yunet_2022mar.onnx"
 license_plate_onnx_file: "/root/blurring_pipeline/external/opencv_zoo/models/license_plate_detection_yunet/license_plate_detection_lpd_yunet_2022may.onnx"

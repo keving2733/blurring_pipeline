@@ -16,8 +16,8 @@ class DetectBlurPipeline:
         # path to face detection model
         face_detection_model = fd_onnx_file
         licence_plate_model = lp_onnx_file
-        score_threshold = 0.8
-        nms_threshold = 0.4
+        score_threshold = 0.9
+        nms_threshold = 0.3
         top_k = 5000
         scale = 1
 
@@ -90,8 +90,11 @@ class DetectBlurPipeline:
                 roi = cv2.GaussianBlur(roi, (51, 51), 50)
 
                 # add blurred face on original image to get final image
-                img[y_start:y_start + roi.shape[0],
-                    x_start:x_start + roi.shape[1]] = roi
+                try:
+                    img[y_start:y_start + roi.shape[0],
+                        x_start:x_start + roi.shape[1]] = roi
+                except ValueError:
+                    pass
 
         if gray_image:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)

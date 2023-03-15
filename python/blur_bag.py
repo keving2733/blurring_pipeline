@@ -15,7 +15,7 @@ from sensor_msgs.msg import Image, CompressedImage
 from cv_bridge import CvBridge
 
 
-def blur_bag(source, topics, blur_topics, output, fd_onnx_file, lp_onnx_file):
+def blur_bag(source, topics, blur_topics, output_robot, output, fd_onnx_file, lp_onnx_file):
     """Extract images from bag and write to new bag
     """
     processor = DetectBlurPipeline(fd_onnx_file, lp_onnx_file)
@@ -24,8 +24,12 @@ def blur_bag(source, topics, blur_topics, output, fd_onnx_file, lp_onnx_file):
     previous_faces = []
     inbag = rosbag.Bag(source, "r")
     for topic_name, msg, t in inbag.read_messages(topics=topics):
+        topic_name_list = topic_name.split("/")
+        topic_name_list[1] = output_robot
+        new_topic = "/".join(topic_name_list)
+
         if topic_name not in blur_topics:
-            outbag.write(topic_name, msg, t)
+            outbag.write(new_topic, msg, t)
             continue
 
         compressed = (msg._type == "sensor_msgs/CompressedImage")
@@ -46,7 +50,7 @@ def blur_bag(source, topics, blur_topics, output, fd_onnx_file, lp_onnx_file):
             blurred_message = bridge.cv2_to_imgmsg(
                 blurred_image, encoding="passthrough")
 
-        outbag.write(topic_name, blurred_message, t)
+        outbag.write(new_topic, blurred_message, t)
     outbag.close()
     return
 
@@ -58,13 +62,21 @@ def main():
     args = parser.parse_args()
     with open(args.config, 'r') as config_file:
         configs = yaml.safe_load(config_file)
-        robot_name = configs["robot_name"]
-        topics = ["/" + robot_name + "/" + t for t in configs["topics"]]
-        blur_topics = ["/" + robot_name + "/" +
-                       t for t in configs["blur_topics"]]
         # print(topics, blur_topics)
-        blur_bag(configs["bag_path"], topics, blur_topics, configs["output_path"],
-                 configs["face_onnx_file"], configs["license_plate_onnx_file"])
+        input_bags = configs["bag_path"]
+        input_robots = configs["robot_name"]
+        output_robots = configs["out_robot_name"]
+        output_bags = configs["output_path"]
+        for i in range(len(input_bags)):
+            bag_path = input_bags[i]
+            robot_name = input_robots[i]
+            topics = ["/" + robot_name + "/" + t for t in configs["topics"]]
+            blur_topics = ["/" + robot_name + "/" +
+                       t for t in configs["blur_topics"]]
+            output_robot = output_robots[i]
+            output_path = output_bags[i]
+            blur_bag(bag_path, topics, blur_topics, output_robot, output_path,
+                     configs["face_onnx_file"], configs["license_plate_onnx_file"])
 
 
 if __name__ == '__main__':

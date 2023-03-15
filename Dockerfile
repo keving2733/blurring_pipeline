@@ -61,13 +61,18 @@ RUN cd /opt/ &&\
     # Cmake configure
     cmake \
         -DOPENCV_EXTRA_MODULES_PATH=/opt/opencv_contrib-${OPENCV_VERSION}/modules \
+        -DOPENCV_ENABLE_NONFREE=ON \
         -DWITH_CUDA=ON \
         -DWITH_CUDNN=ON \
         -DWITH_CUBLAS=ON \
         -DCUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda-11.4 \
         -DPYTHON_EXECUTABLE=~/usr/bin/python3 \
         -DOPENCV_DNN_CUDA=ON \
-        -DCUDA_ARCH_BIN=7.5,8.0,8.6 \
+        -DENABLE_FAST_MATH=1 \
+        -DCUDA_FAST_MATH=1 \
+        -DCUDA_ARCH_BIN=7.5 \
+        -DWITH_CUBLAS=1 \
+        -DHAVE_opencv_python3=ON \
         -DCMAKE_BUILD_TYPE=RELEASE \
         # Install path will be /usr/local/lib (lib is implicit)
         -DCMAKE_INSTALL_PREFIX=/usr/local \
