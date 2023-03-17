@@ -18,6 +18,7 @@ from cv_bridge import CvBridge
 def blur_bag(source, topics, blur_topics, output_robot, output, fd_onnx_file, lp_onnx_file):
     """Extract images from bag and write to new bag
     """
+    print("Blurring rosbag: {}".format(source))
     processor = DetectBlurPipeline(fd_onnx_file, lp_onnx_file)
     bridge = CvBridge()
     outbag = rosbag.Bag(output, 'w')
