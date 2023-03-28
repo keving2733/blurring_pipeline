@@ -50,6 +50,7 @@ def blur_bag(source, topics, blur_topics, output_robot, output, fd_onnx_file, lp
         else:
             blurred_message = bridge.cv2_to_imgmsg(
                 blurred_image, encoding="passthrough")
+        blurred_message.header = msg.header
 
         outbag.write(new_topic, blurred_message, t)
     outbag.close()
