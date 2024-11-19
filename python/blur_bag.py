@@ -2,18 +2,17 @@
 
 # Press Shift+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-import cv2
+from cv_bridge import CvBridge
 import os
 import argparse
 import rosbag
 import numpy as np
 import yaml
 import click
+import cv2
 
 from face_detect_utils import DetectBlurPipeline
 from sensor_msgs.msg import Image, CompressedImage
-from cv_bridge import CvBridge
-
 
 def blur_bag(source, topics, blur_topics, output_robot, output, fd_onnx_file, lp_onnx_file):
     """Extract images from bag and write to new bag
